@@ -13,7 +13,7 @@ class FacebookIdentityIntegrationTest extends FunSpec {
   describe("real life") {
     it("can make a call out to the real service") {
 
-      val facebookIdentityClient = new FacebookIdentityClient(new JsonClient(new URL("http://whereisit")))
+      val facebookIdentityClient = new FacebookIdentityClient(RealAccessTokenService.reallyCheckAccessToken(new JsonClient(new URL("http://whereisit"))))
 
       // perform actual test
     }
