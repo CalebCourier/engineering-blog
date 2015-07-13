@@ -17,7 +17,9 @@ tags: [scala, testing, functional]
 </style>
 
 
-For unit testing in Java, mocking frameworks replace classes necessary for the code under test, but not under test themselves. These mock frameworks don't transfer easily to Scala. That's OK: the functional side of Scala can make mocking unnecessary. As someone told me the other day at PolyConf (link): mocks are the sound of your code crying out, "please structure me differently!"
+For unit testing in Java, mocking frameworks replace classes necessary for the code under 
+test, but not under test themselves. These mock frameworks don't transfer easily to Scala. That's OK: the functional side of Scala can make mocking unnecessary. As someone told me the other day at 
+[PolyConf](http://polyconf.com): mocks are the sound of your code crying out, "please structure me differently!"
 
 Don't use mocks? Structure code differently? Easier said than done. What follows is a practical example of removing the need for a mock object, and at the same time separating concerns of interface and business logic.
 
@@ -86,13 +88,13 @@ it("returns a FacebookIdentity when received from facebook") {
 
 This test constructs the expected response and then provides {{"a function"|sc:"functionParam"}} that returns that, no matter what. 
 It isn't checking the arguments, although it could. We can pass a function that does whatever we want, for the purposes of our test.
- There's no {{"JsonClient"|sc:"jsonClient"}} object to mock. (Technically, {{"the function we passed"|sc:"functionParam"}} is a fake, which is different from a mock (link to Justin's talk if I can find it).)
+ There's no {{"JsonClient"|sc:"jsonClient"}} object to mock. (Technically, {{"the function we passed"|sc:"functionParam"}} is a fake, which is different from a mock. It works here.)
 
-This is a minimal example, and the test isn't perfect. Yet, it shows how passing a "{{"how"|sc:"functionParam"}}" instead of passing {{"an object"|sc:"jsonClient"}} can make testing easier in Scala. Check the sample code before (link) and after (link) to see the difference.
+This is a minimal example, and the test isn't perfect. Yet, it shows how passing a "{{"how"|sc:"functionParam"}}" instead of passing {{"an object"|sc:"jsonClient"}} can make testing easier in Scala. Check the sample code [before](https://github.com/MonsantoCo/engineering-blog/tree/testing-with-mocking/examples/testing-without-mocking) and [after](https://github.com/MonsantoCo/engineering-blog/tree/testing-without-mocks/examples/testing-without-mocking) to see the difference.
 
 This example illustrates a ports-and-adapters architecture. By removing the interface code, we created a {{"port"|sc:"port"}} -- like a hole, like a Java interface. Then the RealJsonClient contains an {{"adapter"|sc:"functionParam"}}:
  a plug for the hole that hooks up to a real-life system. The function passed in the test is an {{"adapter"|sc:"functionParam"}} that fits the same hole.
 
 Whenever you see mocking in Scala, look for an opportunity to separate {{"decisionmaking code"|sc:"logic"}} from {{"interface code"|sc:"interface"}}. Consider this style instead.
 
-Thanks to Duana (twitter link) for asking me these questions and providing the example.
+Thanks to [Duana](https://twitter.com/starkcoffee) for asking me these questions and providing the example.
