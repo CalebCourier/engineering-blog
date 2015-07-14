@@ -14,6 +14,7 @@ tags: [scala, testing, functional]
   .jsonClient {color: #E80D0C }
   .functionParam {color: #1ab955 }
   .port {color: #FF9C00 }
+  .pass {color: #D907E8 }
 </style>
 
 
@@ -48,7 +49,11 @@ The tests want to say, "If the inner call returns success, provide the returned 
 The secret here is to recognize that part of the method under test is about the {{"interface" | sc: "interface" }}, and part of it is {{"business logic" | sc: "logic" }}.
 
 The {{"interface"|sc:"interface"}} is only testable in integration tests. That's where we check our assumptions about the path structure, the input and the output of the other service. 
-The {{"business logic"|sc:"logic"}} part of this is unit-testable once we separate the two. Instead of passing in a general {{"JsonClient"|sc:"jsonClient"}},
+The {{"business logic"|sc:"logic"}} part of this is unit-testable once we separate the two.
+
+# Ports and Adapters
+
+ Instead of passing in a general {{"JsonClient"|sc:"jsonClient"}},
  let's pass in {{"a function"|sc:"functionParam"}} that contains all the interface code. That function needs an access token, and it returns a future response.
 
 <div class="highlight"><pre><code class="language-scala" data-lang="scala">
@@ -66,7 +71,7 @@ class FacebookClient({{"howToCheck: String => Future[JsonResponse]" | sc: "port"
 Meanwhile, the real {{"interface code"|sc:"interface"}} is shipped off to a handy object somewhere:
 
 <div class="highlight"><pre><code class="language-scala" data-lang="scala">
-object RealJsonClient {
+object RealAccessTokenService {
   def reallyCheckAccessToken({{"jsonClient:JsonClient"|sc:"jsonClient"}})(accessToken: String): Future[JsonResponse] = jsonClient<span class="interface">.getWithoutSession(
     Path() / "identity",
     Params("access_token" -> accessToken)
@@ -95,6 +100,44 @@ This is a minimal example, and the test isn't perfect. Yet, it shows how passing
 This example illustrates a ports-and-adapters architecture. By removing the interface code, we created a {{"port"|sc:"port"}} -- like a hole, like a Java interface. Then the RealJsonClient contains an {{"adapter"|sc:"functionParam"}}:
  a plug for the hole that hooks up to a real-life system. The function passed in the test is an {{"adapter"|sc:"functionParam"}} that fits the same hole.
 
-Whenever you see mocking in Scala, look for an opportunity to separate {{"decisionmaking code"|sc:"logic"}} from {{"interface code"|sc:"interface"}}. Consider this style instead.
+# Or: Flow of Data
+
+The ports-and-adapters style lets us drop in different implementations for I/O that happens in the middle of our code. If we can avoid I/O in the middle of the code, even better.
+
+There's a cleaner way of restructuring this same code, because it's possible to view it as: gather data, then make decisions, then output.
+
+![input, transformation, output](/img/flow-of-data.png)
+
+Instead of passing in {{ "how" | sc: "port" }} to call the AccessTokenService, why not make the call and {{ "pass the results" | sc: "pass" }} into the function under test?
+
+<div class="highlight"><pre><code class="language-scala" data-lang="scala">
+object FacebookIdentityClient  {
+  def fetchFacebookIdentity({{ "accessTokenInfo: Future[JsonResponse]" | sc: "pass"}}) : Future[Option[FacebookIdentity]] = {
+   {{ "accessTokenInfo.map {" | sc: "logic" }}
+      {{ "case JsonResponse(OkStatus, json) => Some(FacebookIdentity.from(json)){" | sc: "logic" }}
+      {{ "case _ => None{" | sc: "logic" }}
+    <span class="logic">}</span>
+  }
+}
+</code></pre></div>
+
+The function is data-in, data-out. No need to instantiate a class; an object will do. The code is even easier to test now. No mocks, no fakes, construct some input and {{ "pass it in" | sc: "pass" }}.
+
+<div class="highlight"><pre><code class="language-scala" data-lang="scala">
+import FacebookIdentityClient._
+
+it("returns a FacebookIdentity when received from facebook") {
+  val jsonBody = Map("identity" -> Map("id" -> "a_facebook_id")).toJson
+  val accessTokenInfo = Future(JsonResponse(OkStatus, jsonBody))
+
+  Await.result(fetchFacebookIdentity({{ "accessTokenInfo" | sc: "pass" }}), 1.second) ===
+  Some(FacebookIdentity("a_facebook_id"))
+}
+</code></pre></div>
+
+In the real world, we use the same RealAccessTokenService to gather the input before calling 
+our data-in, data-out function. Instead of passing "how to gather input" we're passing {{"the input" | sc: "pass" }} as data. This is the simplest structure.
+
+Whenever you see mocking in Scala, look for an opportunity to separate {{"decisionmaking code"|sc:"logic"}} from {{"interface code"|sc:"interface"}}. Consider these styles instead.
 
 Thanks to [Duana](https://twitter.com/starkcoffee) for asking me these questions and providing the example.
