@@ -28,16 +28,14 @@ Say there's an IdentityService that returns a Facebook username based on an acce
 information about the access token. Then it interprets the result: success provides an identity; anything else means proceed 
 anonymously (return no identity). The code looks like:
 
-// TODO: this doesn't format right. Maybe Chris can help?
-
 <div class="highlight"><pre><code class="language-scala" data-lang="scala">
 class FacebookIdentityClient({{ "jsonClient: JsonClient" | sc: "jsonClient" }})  {
 
   def fetchFacebookIdentity(accessToken: String) : Future[Option[FacebookIdentity]] = {
-    {{ "jsonClient" | sc: "jsonClient" }}<span class="interface">.getWithoutSession(
-      Path("identities"),
-      Params("access_token" -> </span>accessToken<span class="interface">)<br/>
-    )</span>.map <span class="logic">{
+    {{ "jsonClient" | sc: "jsonClient" }}<span class="interface">.getWithoutSession(</span>
+      <span class="interface">Path("identities"),</span>
+      <span class="interface">Params("access_token" -> </span>accessToken<span class="interface">)</span>
+    <span class="interface">)</span>.map <span class="logic">{
       case JsonResponse(OkStatus, json, _, _) => Some(FacebookIdentity.from(json))
       case _ => None
     }</span>
@@ -60,10 +58,10 @@ The {{"business logic"|sc:"logic"}} part of this is unit-testable once we separa
 class FacebookClient({{"howToCheck: String => Future[JsonResponse]" | sc: "port"}}) {
 
   def fetchFacebookIdentity(accessToken: String) : Future[Option[FacebookIdentity]] = {
-    {{"howToCheck"|sc:"port"}}(accessToken).map <span class="logic">{
-      case JsonResponse(OkStatus, json, _, _) => Some(FacebookIdentityMapper(json))
-      case _ => None
-    }</span>
+    {{"howToCheck"|sc:"port"}}(accessToken).map <span class="logic">{</span>
+      <span class="logic">case JsonResponse(OkStatus, json, _, _) => Some(FacebookIdentityMapper(json))</span>
+      <span class="logic">case _ => None</span>
+    <span class="logic">}</span>
   }
 }
 </code></pre></div>
@@ -72,10 +70,11 @@ Meanwhile, the real {{"interface code"|sc:"interface"}} is shipped off to a hand
 
 <div class="highlight"><pre><code class="language-scala" data-lang="scala">
 object RealAccessTokenService {
-  def reallyCheckAccessToken({{"jsonClient:JsonClient"|sc:"jsonClient"}})(accessToken: String): Future[JsonResponse] = jsonClient<span class="interface">.getWithoutSession(
-    Path() / "identity",
-    Params("access_token" -> accessToken)
-  )</span>
+  def reallyCheckAccessToken({{"jsonClient:JsonClient"|sc:"jsonClient"}})(accessToken: String): Future[JsonResponse] = 
+    {{"jsonClient" | sc: "jsonClient"}}<span class="interface">.getWithoutSession(</span>
+    <span class="interface">Path() / "identity",</span>
+    <span class="interface">Params("access_token" -> accessToken)</span>
+  <span class="interface">)</span>
 }
 </code></pre></div>
 
@@ -84,7 +83,8 @@ The production code can instantiate the Facebook client using that object, but t
 <div class="highlight"><pre><code class="language-scala" data-lang="scala">
 it("returns a FacebookIdentity when received from facebook") {
   val jsonBody = Map("identity" -> Map("id" -> "a_facebook_id")).toJson
-  val facebookClient = new FacebookIdentityClient({{"_ => Future(JsonResponse(OkStatus, jsonBody))" | sc: "functionParam" }})
+  val facebookClient 
+    = new FacebookIdentityClient({{"_ => Future(JsonResponse(OkStatus, jsonBody))" | sc: "functionParam" }})
 
   Await.result(facebookClient.fetchFacebookIdentity("an_access_token"), 1.second) ===
     Some(FacebookIdentity("a_facebook_id"))
