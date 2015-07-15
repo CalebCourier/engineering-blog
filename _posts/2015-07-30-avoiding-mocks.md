@@ -138,6 +138,6 @@ it("returns a FacebookIdentity when received from facebook") {
 In the real world, we use the same RealAccessTokenService to gather the input before calling 
 our data-in, data-out function. Instead of passing "how to gather input" we're passing {{"the input" | sc: "pass" }} as data. This is the simplest structure.
 
-Whenever you see mocking in Scala, look for an opportunity to separate {{"decisionmaking code"|sc:"logic"}} from {{"interface code"|sc:"interface"}}. Consider these styles instead.
+Whenever you see mocking in Scala, look for an opportunity to separate {{"decision-making code"|sc:"logic"}} from {{"interface code"|sc:"interface"}}. Consider these styles instead.
 
 Thanks to [Duana](https://twitter.com/starkcoffee) for asking me these questions and providing the example.
